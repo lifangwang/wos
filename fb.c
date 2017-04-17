@@ -57,10 +57,10 @@ struct vga_info{
 
 void fb_move_cursor(unsigned short pos)
 {
-	outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
-	outb(FB_DATA_PORT, ((pos>>8) & 0x00ff));
-	outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
-	outb(FB_DATA_PORT, pos&0x00ff);
+	outb( FB_HIGH_BYTE_COMMAND,FB_COMMAND_PORT);
+	outb( ((pos>>8) & 0x00ff),FB_DATA_PORT);
+	outb( FB_LOW_BYTE_COMMAND,FB_COMMAND_PORT);
+	outb( pos&0x00ff,FB_DATA_PORT);
 }
 
 /**
@@ -68,7 +68,7 @@ get fb color
 */
 static inline uint8_t fb_color(uint8_t fg, uint16_t bg)
 {
-	uint8_t color = fg<< 4 | bg;
+	uint8_t color = bg<< 4 | fg;
 	return color;
 	
 }
@@ -88,6 +88,34 @@ static inline   void fb_write_cell(size_t i, char c, uint8_t color_info)
         
 }
 
+static inline void clear_line(uint8_t row_index)
+{
+	uint8_t color_info = fb_color(vga.fg, vga.bg);
+	size_t clear_index = row_index*vga.width;
+	size_t clear_last = clear_index + vga.width;
+	for(; clear_index <clear_last  ; clear_index++)
+		fb_write_cell(clear_index, ' ', color_info);
+	
+}
+
+/**
+scroll a line
+move one line to the line before
+*/
+static void fb_scroll()
+{
+
+	for(size_t y=0; y<vga.height-1; y++){
+		for(size_t x=0; x<vga.width; x++){
+			vga.fb[y*vga.width + x] = vga.fb[(y+1)*vga.width +x];
+		}
+	}
+
+	//clear last line
+	clear_line(vga.height-1);
+	
+	
+}
 /**
 write data to fb
 */
@@ -97,7 +125,7 @@ int fb_write(char* data, size_t data_len)
 	char out_data;
 	uint8_t is_display = 1;
 	uint16_t cursor_pos = 0;
-	uint8_t need_scroll = 0;
+	
 	
 	uint8_t color_info = fb_color(vga.fg, vga.bg);
 	
@@ -126,9 +154,9 @@ int fb_write(char* data, size_t data_len)
 			vga.cursor_y += 1;
 			vga.cursor_x = 0;
 		}
-		if(vga.cursor_y == vga.height){
-			vga.cursor_y = 0;
-			need_scroll = 1;
+		if(vga.cursor_y == vga.height){	
+			fb_scroll();
+			vga.cursor_y = vga.height-1;
 		}
 		cursor_pos = vga.cursor_y * vga.width + vga.cursor_x;
 		fb_move_cursor(cursor_pos);
