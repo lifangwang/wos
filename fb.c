@@ -45,8 +45,7 @@ static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
 struct vga_info{
 	uint16_t *fb;
-	uint8_t fg;
-	uint8_t bg;
+	uint8_t bg_color;
 	size_t width;
 	size_t height;
 	uint8_t cursor_x;
@@ -66,7 +65,7 @@ void fb_move_cursor(unsigned short pos)
 /**
 get fb color
 */
-static inline uint8_t fb_color(uint8_t fg, uint16_t bg)
+static inline uint8_t fb_color_entry(uint8_t fg, uint16_t bg)
 {
 	uint8_t color = bg<< 4 | fg;
 	return color;
@@ -90,29 +89,27 @@ static inline   void fb_write_cell(size_t i, char c, uint8_t color_info)
 
 static inline void clear_line(uint8_t row_index)
 {
-	uint8_t color_info = fb_color(vga.fg, vga.bg);
 	size_t clear_index = row_index*vga.width;
-	size_t clear_last = clear_index + vga.width;
+	size_t clear_last = vga.height * vga.width;
 	for(; clear_index <clear_last  ; clear_index++)
-		fb_write_cell(clear_index, ' ', color_info);
+		fb_write_cell(clear_index, ' ', vga.bg_color);
 	
 }
 
 /**
-scroll a line
-move one line to the line before
+scroll  line
 */
-static void fb_scroll()
+static void fb_scroll(size_t line)
 {
-
-	for(size_t y=0; y<vga.height-1; y++){
-		for(size_t x=0; x<vga.width; x++){
-			vga.fb[y*vga.width + x] = vga.fb[(y+1)*vga.width +x];
-		}
+	size_t i=0;
+	volatile uint16_t *src = vga.fb+line*vga.width;
+	size_t copy_len = (vga.height-line)*vga.width;
+	for(i=0; i<copy_len; i++){
+			vga.fb[i] = src[i];
 	}
 
-	//clear last line
-	clear_line(vga.height-1);
+	//clear  lines
+	clear_line(vga.height-line);
 	
 	
 }
@@ -125,9 +122,6 @@ int fb_write(char* data, size_t data_len)
 	char out_data;
 	uint8_t is_display = 1;
 	uint16_t cursor_pos = 0;
-	
-	
-	uint8_t color_info = fb_color(vga.fg, vga.bg);
 	
 	for(size_t i=0; i<data_len; i++)
 	{
@@ -155,14 +149,14 @@ int fb_write(char* data, size_t data_len)
 			vga.cursor_x = 0;
 		}
 		if(vga.cursor_y == vga.height){	
-			fb_scroll();
+			fb_scroll(1);
 			vga.cursor_y = vga.height-1;
 		}
 		cursor_pos = vga.cursor_y * vga.width + vga.cursor_x;
 		fb_move_cursor(cursor_pos);
 		
 		if(is_display){
-			fb_write_cell(cursor_pos, data[i], color_info);
+			fb_write_cell(cursor_pos, data[i], vga.bg_color);
 		}
 	}
 	
@@ -171,10 +165,10 @@ int fb_write(char* data, size_t data_len)
 
 static void fb_clear()
 {
-	uint8_t color_info = fb_color(vga.fg, vga.bg);
+	
 	size_t fblen = vga.width * vga.height;
 	for(size_t i=0; i<fblen ; i++)
-		fb_write_cell(i, ' ', color_info);
+		fb_write_cell(i, ' ', vga.bg_color);
 	vga.cursor_x = 0; //position for cursor
 	vga.cursor_y = 0;
 }
@@ -185,10 +179,9 @@ init fb
 void fb_init()
 {
 	vga.fb = (uint16_t *) 0x000B8000;
-	vga.fg = 2;
-	vga.bg = 8;
 	vga.width = 80;
 	vga.height = 25;
+	vga.bg_color = 8<<4 | 2;
 	
 	  
 	//clear all the chars

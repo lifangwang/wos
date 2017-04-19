@@ -1,6 +1,5 @@
 # wos
-纯粹是想做着玩的，搞了这么多年的内核开发，没有一个自己的OS，感觉不太像话。参考文档：
-[http://wiki.osdev.org/Getting_Started](http://wiki.osdev.org/Getting_Started)。
+一方面受到[lowlevelprogramming-university](https://github.com/gurugio/lowlevelprogramming-university)启发，另一方面搞了这么多年的内核开发，没有一个自己的OS，感觉不太像话。
 
 
 ## 搭建cross compiler
@@ -15,4 +14,57 @@
 ## 最简单的内核
 
 可能还不能称之为内核，这仅是一段从启动到打印出"hello world"的小程序，但这是一个好的开头，我们可以在这个基础上加入更多的内容，例如内存管理，进城管理，驱动程序等。
+
+_在从简单内核进入到内存管理的过程中，我有点搞不清楚怎么做硬件初始化,正在阅读 [i386 manual](http://css.csail.mit.edu/6.858/2015/readings/i386.pdf) 和 [operating system from 0 to 1](https://tuhdo.github.io/os01/)，希望能找到答案_
+
+## x86 Manual-内存管理
+
+### x86 段式存储管理
+#### 地址转换
+
+![](http://ooaecudja.bkt.clouddn.com/seg_tran.png)
+
+#### segment descriptor
+
+segment descriptor是由编译器/连接器/加载器/OS创建的，不是由应用程序员创建。结构如下：
+
+![](http://ooaecudja.bkt.clouddn.com/descriptor.png)
+#### descriptor table
+x86 处理器能识别两种Descriptor table：
+* global descriptor table（GDT）, 其地址保存在GDTR 寄存器;指令LGDT/SGDT用来访问GDTR
+* local descriptor table（LDT)，其地址保存在LDTR寄存器（每个进程有自己的LDT），指令LLDT/SLDT用来访问LDTR
+所谓的descriptor table， 是内存中的一块区域，用来存放segment descriptor.
+
+#### selector
+在x86的段式存储管理下，一个逻辑地址(应用程序员看到的地址）包含两个部分，16位的segment selector和32位的偏移地址。selector一般由编译器/连接器指定，对应用程序员不可见。selector的格式：
+
+15--------------4--3----0
+|-----index-----|T/L|RPL|
+
+T:table indicator
+RPL: requestor's priviledge level
+
+selector用于在descriptor table中获取descriptor ，descriptor中有段的base address以及一些权限控制位。
+
+#### segment register
+segment register 存储selector以及对应的segment descriptor ，避免每次都需要去内存读取descriptor。
+操作segment register的指令有：
+* mov， pop，lds，lss，lgs，lfs
+* call/jmp
+
+### page管理
+前面段式存储管理将应用程序的逻辑地址转换为线性地址，那么PAGE管理将线性地址转换为物理地址；PAGE内存管理模式是以PAGE方式划分虚拟内存的内存管理系统的基本功能。这个功能对于x86是可选的，仅当CR0寄存器的PG位设置之后才会生效。PG位一般由OS在系统初始化过程中设置。
+
+#### 线性地址
+线性地址是间接访问物理地址的一种地址，它有页目录项表，页表项，偏移三部分构成。
+
+31------------2221---------------1211------------0
+|----DIR-------||-----PAGE--------||-----OFFSET--|
+
+当前使用的页目录项存储在CR3寄存器，也被称之为页目录基址寄存器（PDBR）；内存管理软件可以选择为所有进程使用一个页目录表，或者为不同的进程使用不同的页目录表，或者结合两者。
+
+### 结合page管理和段式管理
+
+x86可以“关闭”段式管理模式；x86没有直接的命令用来关闭段式寄存器，但是可以这么来实现：让所有的segment descriptor指向整个32位的线性地址空间。
+
 
