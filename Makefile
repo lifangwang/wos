@@ -1,26 +1,21 @@
-OBJECTS = boot.o kernel.o fb.o 
-CC = i686-elf-gcc
-CFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+BUILD_DIR = build
+OS := $(BUILD_DIR)/os/wos.elf
 LDFLAGS = -T linker.ld  -ffreestanding -O2 -nostdlib -lgcc
 AS = i686-elf-as
 all: wos.iso
 
-wos.iso: wos.elf
+.PHONY: wos.iso os
+
+wos.iso: os
 	rm -fr isodir
 	mkdir -p isodir/boot/grub
-	cp wos.elf isodir/boot/wos.elf
+	cp $(OS) isodir/boot/wos.elf
 	cp grub.cfg isodir/boot/grub/grub.cfg
 	grub-mkrescue -o wos.iso isodir
 
-
-wos.elf: $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o wos.elf
-	
-%.o:%.c
-	$(CC) $(CFLAGS) -c $< -o $@
-	
-%.o:%.s
-	$(AS) $< -o $@
+os:
+	make -C os
 	
 clean:
-	rm -fr *.o wos.elf wos.iso isodir
+	make -C os clean
+	rm  -fr wos.iso isodir
