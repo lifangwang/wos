@@ -41,7 +41,7 @@ x86 处理器能识别两种Descriptor table：
 15--------------4--3----0
 |-----index-----|T/L|RPL|
 
-T:table indicator
+T:table indicator，表示使用GDT(0）还是LDT(1)
 RPL: requestor's priviledge level
 
 selector用于在descriptor table中获取descriptor ，descriptor中有段的base address以及一些权限控制位。
@@ -66,5 +66,11 @@ segment register 存储selector以及对应的segment descriptor ，避免每次
 ### 结合page管理和段式管理
 
 x86可以“关闭”段式管理模式；x86没有直接的命令用来关闭段式寄存器，但是可以这么来实现：让所有的segment descriptor指向整个32位的线性地址空间。
+
+### 8086实模式寻址(real mode)
+最早期的8086CPU只有一种工作方式就是real mode，数据总线为16位，地址总线为20位，real mode下所有寄存器都是16位，从80286开始有了保护模式，从80386开始CPU数据总线和地址总线都是32位，而且寄存器也是32位，但80386为了保持向前兼容都保留了real mode。现代的操作系统加电时首先工作在实模式下，然后再切换到保护模式下。
+在real mode下寻址比较简单，cs/ds等段寄存器中存放的是基址，真实的物理地址采用 *基址<<4 + 偏移地址* 得到；
+而在保护模式下，cs/ds中存放的段选择符；段选择符(selector)中的index需要去GDT/LDT索引段描述符， 段描述符有记录该段的基址/长度等信息。因此在进入保护模式之前，需要先设置好全局描述符表（GDT），，然后用lgdt指令加载描述符基址，然后设置CPU的保护标志进入保护模式。
+
 
 
