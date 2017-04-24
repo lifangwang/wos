@@ -17,13 +17,16 @@ setup_start:
 	mov	bp,msg1
 	mov	ax,0x1301	;write string, move cursor
 	int	0x10
-	
 	cli
 	cld
-	mov ax,0x10000		;copy sys to 1M
+	;mov ax,0x10000		;copy sys to 1M
+	mov ax,0x00000		;copy sys to 1M
 do_move:
 	mov	es,ax		;destination segment
-	mov 	ax,0x1000
+	;mov 	ax,0x1000
+	add 	ax,0x1000
+	cmp 	ax,0x9000
+	jz 	end_move
 	mov	ds,ax		; source segment
 	sub	di,di
 	sub	si,si
@@ -35,7 +38,6 @@ end_move:
 	mov	ds,ax
 	lidt	[idt_48]		; load idt with 0,0
 	lgdt	[gdt_48]		; load gdt with whatever appropriate
-	
 	; that was painless, now we enable A20
 
 	call	empty_8042
@@ -74,7 +76,6 @@ end_move:
 	out	0x21,al
 	dw	0x00eb,0x00eb
 	out	0xA1,al
-
 	mov	ax,0x0001	; protected mode (PE) bit
 	lmsw	ax		; This is it!
 	jmp	8:0		; jmp offset 0 of segment 8 (cs)

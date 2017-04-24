@@ -89,6 +89,7 @@ load_system:
 	mov	cx,0x0003		; sector 3, track 0
 	mov	bx,0x0000		; address = 512, in INITSEG
 	mov	ax,0x0200+KERNEL_SIZE	; service 2, nr of sectors
+
 	int	0x13			; rea
 
 	jnc	ok_load_system		; ok - continue
