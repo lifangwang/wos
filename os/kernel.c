@@ -19,14 +19,16 @@
 #if defined(__cplusplus)
 extern "C" /* Use C linkage for kernel_main. */
 #endif
-
+extern void mem_init();
+extern void fb_init();
 
 void main(void) {
 	/* Initialize terminal interface */
 	char* info = "hello kernel\nhello\tagain\n";
 	fb_init();
 	/* Newline support is left as an exercise. */
-	puts(info);
+	printf(info);
+	mem_init();
 	for(;;){
 	}
 }
