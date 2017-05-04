@@ -21,16 +21,16 @@ void puts(char* info)
 		__asm__("divl %4":"=a" (n),"=d" (__res):"0" (n),"1" (0),"r" (base)); \
 		__res; })
 
-static char* number(char* buf, int number, int base)
+ char* number(char* buf, int num, int base)
 {
 	char c,sign,tmp[36];
 	const char *digits="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	int i = 0;
-	if(number == 0)
+	if(num == 0)
 		tmp[i++] = '0';
 	else{
-		while(number)
-			tmp[i++] = do_div(number,base);
+		while(num)
+			tmp[i++] = digits[do_div(num,base)];
 	}
 	while(i--)
 		*buf++ = tmp[i];

@@ -101,6 +101,7 @@ scroll  line
 */
 static void fb_scroll(size_t line)
 {
+	
 	size_t i=0;
 	volatile uint16_t *src = vga.fb+line*vga.width;
 	size_t copy_len = (vga.height-line)*vga.width;
