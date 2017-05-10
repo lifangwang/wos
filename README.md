@@ -86,6 +86,19 @@ segment register 存储selector以及对应的segment descriptor ，避免每次
 
 x86可以“关闭”段式管理模式；x86没有直接的命令用来关闭段式寄存器，但是可以这么来实现：让所有的segment descriptor指向整个32位的线性地址空间。
 
+## x86 Manual-中断管理
+
+### 中断描述符（IDS）
+
+
+
+## x86 Manual-任务管理
+
+### 任务描述符（TSS Descriptor）
+
+
+
+
 
 
 

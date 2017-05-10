@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "misc.h"
+#include "os.h"
+#include "syscall.h"
  
 /* Check if the compiler thinks we are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -22,11 +24,19 @@ extern "C" /* Use C linkage for kernel_main. */
 extern void mem_init();
 extern void fb_init();
 extern void trap_init();
-
+extern void sched_init();
+static inline _syscall0(int,fork)
 
 //test functions
 extern void print_test();
+
+void init(void)
+{
+	//printf("in init\n");
+}
+
 void main(void) {
+	int fork_pid = 0;
 	/* Initialize terminal interface */
 	char* info = "hello kernel\nhello\tagain\n";
 	fb_init();
@@ -35,8 +45,22 @@ void main(void) {
 	print_test();
 	mem_init();
 	trap_init();
-	trap_test();
+	//trap_test();
+	//time_init();
+	sched_init();
+	sti();
+	move_to_user_mode();
+	puts("usermode?");
+	//printf("current in usermode %d\n");
+	fork_pid = fork();
+	//printf("fork pid is %d\n", fork_pid);
+	if(!fork_pid){
+		init();//init process starts here
+	}
+	//printf("fork not 0\n");
 	//volatile int test = 1/0;
 	for(;;){
 	}
 }
+
+

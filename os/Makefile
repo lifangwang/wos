@@ -5,6 +5,7 @@ OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(C_SRC))
 OBJECTS_head := $(patsubst %.s,$(BUILD_DIR)/%.o,$(ASM_SRC))
 HEAD := $(BUILD_DIR)/head.o
 OBJECTS_trap :=  $(BUILD_DIR)/traps_asm.o
+OBJECTS_syscall :=  $(BUILD_DIR)/system_call.o
 CC = i686-elf-gcc
 CFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I../include
 LDFLAGS = -T linker.ld  -ffreestanding -O2 -nostdlib -lgcc  
@@ -22,7 +23,7 @@ wos.elf: $(OBJECTS)
 	objcopy  -O binary -R .note -R .comment $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/kernel.img
 
 kernel.img:$(OBJECTS) $(OBJECTS_head)
-	ld -m elf_i386 -nmagic -Tlinker.ld -M $(HEAD) $(OBJECTS) $(OBJECTS_trap) -o $(BUILD_DIR)/kernel.elf > $(BUILD_DIR)/kernel.map
+	ld -m elf_i386 -nmagic -Tlinker.ld -M $(HEAD) $(OBJECTS) $(OBJECTS_trap) $(OBJECTS_syscall) -o $(BUILD_DIR)/kernel.elf > $(BUILD_DIR)/kernel.map
 	objcopy  -O binary -R .note -R .comment $(BUILD_DIR)/kernel.elf $(BUILD_DIR)/kernel.img
 	
 	

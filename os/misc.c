@@ -40,7 +40,7 @@ void puts(char* info)
 int vsprintf(const char* fmt,va_list args)
 {
 	char* buf_ptr, *s;
-	for(buf_ptr = log_buf; *fmt; fmt++){
+	for(buf_ptr = log_buf; *fmt ; fmt++){
 		if(*fmt != '%'){
 			*buf_ptr++ = *fmt;
 			continue;
